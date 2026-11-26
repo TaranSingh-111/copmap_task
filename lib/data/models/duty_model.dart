@@ -9,6 +9,9 @@ enum DutyStatus {
     DutyStatus.cancelled => 'CANCELLED',
   };
 
+  bool get isTerminal =>
+      this == DutyStatus.completed || this == DutyStatus.cancelled;
+
   static DutyStatus fromDatabaseValue(Object? value) {
     final normalized = value?.toString().toUpperCase();
     return DutyStatus.values.firstWhere(
@@ -18,17 +21,65 @@ enum DutyStatus {
   }
 }
 
+class DutyDraft {
+  const DutyDraft({
+    required this.title,
+    required this.startTime,
+    required this.endTime,
+    this.description,
+    this.locationName,
+    this.latitude,
+    this.longitude,
+    this.assignedTo,
+  });
+
+  final String title;
+  final String? description;
+  final String? locationName;
+  final double? latitude;
+  final double? longitude;
+  final String? assignedTo;
+  final DateTime startTime;
+  final DateTime endTime;
+
+  String? validate() {
+    if (title.trim().isEmpty) return 'Enter a duty title.';
+    if (!endTime.isAfter(startTime)) {
+      return 'The end time must be after the start time.';
+    }
+    if ((latitude == null) != (longitude == null)) {
+      return 'Enter both coordinates, or leave both blank.';
+    }
+    if (latitude != null && (latitude! < -90 || latitude! > 90)) {
+      return 'Latitude must be between -90 and 90.';
+    }
+    if (longitude != null && (longitude! < -180 || longitude! > 180)) {
+      return 'Longitude must be between -180 and 180.';
+    }
+    return null;
+  }
+}
+
 class DutyModel {
   const DutyModel({
-    required this.id, required this.title, required this.assignedTo,
-    required this.status, this.description, this.locationName, this.latitude,
-    this.longitude, this.startTime, this.endTime, this.createdBy,
-    this.createdAt, this.updatedAt,
+    required this.id,
+    required this.title,
+    required this.status,
+    this.assignedTo,
+    this.description,
+    this.locationName,
+    this.latitude,
+    this.longitude,
+    this.startTime,
+    this.endTime,
+    this.createdBy,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
   final String title;
-  final String assignedTo;
+  final String? assignedTo;
   final DutyStatus status;
   final String? description;
   final String? locationName;
@@ -67,7 +118,7 @@ class DutyModel {
     locationName: json['location_name'] as String?,
     latitude: (json['latitude'] as num?)?.toDouble(),
     longitude: (json['longitude'] as num?)?.toDouble(),
-    assignedTo: json['assigned_to'] as String,
+    assignedTo: json['assigned_to'] as String?,
     status: DutyStatus.fromDatabaseValue(json['status']),
     startTime: _parseDateTime(json['start_time']),
     endTime: _parseDateTime(json['end_time']),

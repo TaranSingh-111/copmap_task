@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/services/auth_service.dart';
 import '../../../data/repositories/profile_repository.dart';
+import '../../admin/bindings/admin_binding.dart';
 import '../../officer/bindings/duty_binding.dart';
 import '../controllers/auth_controller.dart';
 
@@ -17,5 +18,6 @@ class AuthBinding extends Bindings {
       Get.find<ProfileRepository>(),
     ), permanent: true);
     DutyBinding().dependencies();
+    AdminBinding().dependencies();
   }
 }
