@@ -10,11 +10,7 @@ import '../../../data/repositories/profile_repository.dart';
 enum AuthStatus { loading, signedOut, signedIn, error }
 
 class AuthController extends GetxController {
-  AuthController({
-    required AuthService authService,
-    required ProfileRepository profileRepository,
-  }) : _authService = authService,
-       _profileRepository = profileRepository;
+  AuthController(this._authService, this._profileRepository);
 
   final AuthService _authService;
   final ProfileRepository _profileRepository;

@@ -1,30 +1,33 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:copmap/main.dart';
+import 'package:copmap/data/models/duty_model.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('nullable duty fields parse without null safety errors', () {
+    final duty = DutyModel.fromJson({
+      'id': 'duty-1',
+      'title': 'Patrol',
+      'assigned_to': 'officer-1',
+      'status': 'ASSIGNED',
+      'description': null,
+      'location_name': null,
+      'latitude': null,
+      'longitude': null,
+      'start_time': null,
+      'end_time': null,
+      'created_by': null,
+      'created_at': null,
+      'updated_at': null,
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(duty.status, DutyStatus.assigned);
+    expect(duty.description, isNull);
+    expect(duty.locationName, isNull);
+    expect(duty.latitude, isNull);
+    expect(duty.longitude, isNull);
+    expect(duty.startTime, isNull);
+    expect(duty.endTime, isNull);
+    expect(duty.createdBy, isNull);
+    expect(duty.createdAt, isNull);
+    expect(duty.updatedAt, isNull);
   });
 }
