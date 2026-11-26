@@ -1,3 +1,6 @@
+# Local Supabase configuration
+.env
+
 # Miscellaneous
 *.class
 *.log
