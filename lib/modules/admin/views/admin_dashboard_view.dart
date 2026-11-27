@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../data/models/duty_model.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../bindings/admin_live_map_binding.dart';
+import '../bindings/create_officer_binding.dart';
 import '../controllers/admin_controller.dart';
 import 'admin_duty_details_page.dart';
 import 'admin_live_map_page.dart';
+import 'create_officer_page.dart';
 import 'duty_form_page.dart';
 
 class AdminDashboardView extends GetView<AdminController> {
@@ -19,11 +22,6 @@ class AdminDashboardView extends GetView<AdminController> {
       appBar: AppBar(
         title: const Text('Admin dashboard'),
         actions: [
-          IconButton(
-            tooltip: 'Create duty',
-            onPressed: () => Get.to(() => const DutyFormPage()),
-            icon: const Icon(Icons.add_task),
-          ),
           IconButton(
             tooltip: 'Sign out',
             onPressed: authController.signOut,
@@ -100,11 +98,6 @@ class AdminDashboardView extends GetView<AdminController> {
                     child: Text('Duties',
                         style: Theme.of(context).textTheme.titleLarge),
                   ),
-                  TextButton.icon(
-                    onPressed: () => Get.to(() => const DutyFormPage()),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Create'),
-                  ),
                 ],
               ),
               if (controller.duties.isEmpty)
@@ -126,7 +119,25 @@ class AdminDashboardView extends GetView<AdminController> {
                   ),
                 )),
               const SizedBox(height: 24),
-              Text('Officers', style: Theme.of(context).textTheme.titleLarge),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Officers',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => Get.to(
+                      () => const CreateOfficerPage(),
+                      binding: CreateOfficerBinding(),
+                      preventDuplicates: true,
+                    ),
+                    icon: const Icon(Icons.person_add_alt_1),
+                    label: const Text('Create Officer'),
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
               if (controller.officers.isEmpty)
                 const Padding(
@@ -208,7 +219,19 @@ class _StatusChip extends StatelessWidget {
       DutyStatus.completed => 'COMPLETED',
       DutyStatus.cancelled => 'CANCELLED',
     };
-    return Chip(label: Text(label), visualDensity: VisualDensity.compact);
+    final color = switch (status) {
+      DutyStatus.pending => AppColors.warning,
+      DutyStatus.assigned => AppColors.secondary,
+      DutyStatus.inProgress => AppColors.accent,
+      DutyStatus.completed => AppColors.success,
+      DutyStatus.cancelled => AppColors.error,
+    };
+    return Chip(
+      backgroundColor: color.withValues(alpha: 0.12),
+      side: BorderSide(color: color.withValues(alpha: 0.3)),
+      label: Text(label, style: TextStyle(color: color)),
+      visualDensity: VisualDensity.compact,
+    );
   }
 }
 
@@ -237,6 +260,6 @@ class _InlineMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
-    child: Text(message),
+    child: Text(message, style: TextStyle(color: AppColors.error)),
   );
 }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/config/app_config.dart';
+import 'core/config/app_theme.dart';
 import 'modules/auth/bindings/auth_binding.dart';
 import 'modules/auth/views/auth_gate.dart';
 
@@ -34,13 +35,10 @@ class CopMapApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'CopMap',
+      title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
       initialBinding: AuthBinding(),
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: AppConfig.brandColor),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
       home: const AuthGate(),
     );
   }

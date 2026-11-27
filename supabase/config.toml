@@ -1,0 +1,2 @@
+[functions.create-officer]
+verify_jwt = true

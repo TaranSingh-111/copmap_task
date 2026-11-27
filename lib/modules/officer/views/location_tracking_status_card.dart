@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/services/officer_location_tracking_service.dart';
 import '../../../core/services/officer_location_upload_service.dart';
 
@@ -17,6 +18,24 @@ class LocationTrackingStatusCard extends StatelessWidget {
       final message = tracking.message.value;
       final isActive = status == LocationTrackingStatus.tracking ||
           status == LocationTrackingStatus.foregroundOnly;
+      final statusColor = switch (status) {
+        LocationTrackingStatus.tracking => AppColors.success,
+        LocationTrackingStatus.foregroundOnly ||
+        LocationTrackingStatus.foregroundPermissionDenied ||
+        LocationTrackingStatus.backgroundPermissionPermanentlyDenied ||
+        LocationTrackingStatus.locationDisabled => AppColors.warning,
+        LocationTrackingStatus.error ||
+        LocationTrackingStatus.foregroundPermissionPermanentlyDenied =>
+          AppColors.error,
+        LocationTrackingStatus.checking => AppColors.accent,
+        LocationTrackingStatus.idle => AppColors.secondaryText,
+      };
+      final uploadColor = switch (uploadState) {
+        LocationUploadState.uploaded => AppColors.success,
+        LocationUploadState.retrying => AppColors.error,
+        LocationUploadState.uploading => AppColors.accent,
+        LocationUploadState.idle => statusColor,
+      };
       final title = switch (status) {
         LocationTrackingStatus.idle => 'Location sharing is off',
         LocationTrackingStatus.checking => 'Checking location access…',
@@ -66,7 +85,7 @@ class LocationTrackingStatusCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(icon),
+              Icon(icon, color: statusColor),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +113,7 @@ class LocationTrackingStatusCard extends StatelessWidget {
             ],
             if (uploadMessage != null) ...[
               const SizedBox(height: 8),
-              Text(uploadMessage),
+              Text(uploadMessage, style: TextStyle(color: uploadColor)),
             ],
             if (canRequestBackground || canOpenAppSettings ||
                 status == LocationTrackingStatus.locationDisabled ||

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../data/models/officer_live_map_entry.dart';
 import '../controllers/admin_live_map_controller.dart';
 
@@ -147,9 +148,9 @@ class _OfficerLocationCard extends StatelessWidget {
     final location = entry.location;
     final status = entry.locationStatusAt(now);
     final statusColor = switch (status) {
-      OfficerLocationStatus.current => Colors.green.shade700,
-      OfficerLocationStatus.stale => Colors.orange.shade800,
-      OfficerLocationStatus.noLocation => Colors.grey.shade700,
+      OfficerLocationStatus.current => AppColors.success,
+      OfficerLocationStatus.stale => AppColors.warning,
+      OfficerLocationStatus.noLocation => AppColors.secondaryText,
     };
     final statusLabel = switch (status) {
       OfficerLocationStatus.current => 'CURRENT',
