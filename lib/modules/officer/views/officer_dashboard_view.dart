@@ -4,6 +4,7 @@ import '../../../data/models/duty_model.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/duty_controller.dart';
 import 'duty_details_page.dart';
+import 'location_tracking_status_card.dart';
 
 class OfficerDashboardView extends GetView<DutyController> {
   const OfficerDashboardView({super.key});
@@ -38,7 +39,9 @@ class OfficerDashboardView extends GetView<DutyController> {
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: const [
-                SizedBox(height: 180),
+                SizedBox(height: 16),
+                LocationTrackingStatusCard(),
+                SizedBox(height: 16),
                 Icon(Icons.assignment_outlined, size: 48),
                 SizedBox(height: 12),
                 Center(child: Text('No duties are assigned to you yet.')),
@@ -52,6 +55,7 @@ class OfficerDashboardView extends GetView<DutyController> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
+              const LocationTrackingStatusCard(),
               if (controller.loadError.value != null)
                 _InlineError(message: controller.loadError.value!),
               _DutySection(title: 'Current', icon: Icons.play_circle_outline,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/models/duty_model.dart';
 import '../controllers/duty_controller.dart';
+import 'location_tracking_status_card.dart';
 
 class DutyDetailsPage extends GetView<DutyController> {
   const DutyDetailsPage({required this.duty, super.key});
@@ -15,6 +16,7 @@ class DutyDetailsPage extends GetView<DutyController> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          const LocationTrackingStatusCard(),
           Text(currentDuty.title,
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
