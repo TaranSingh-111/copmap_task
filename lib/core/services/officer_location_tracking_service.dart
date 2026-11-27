@@ -207,6 +207,12 @@ class OfficerLocationTrackingService extends GetxService {
 
   Future<void> _startInternal(String officerId) async {
     _officerId = officerId;
+    final authenticatedUserId = _authService.currentUser?.id;
+    debugPrint(
+      '[OfficerLocationTracking] STAGE 1: tracking start requested '
+      'officerId=$officerId authenticatedUserId=$authenticatedUserId '
+      'userMatches=${authenticatedUserId == officerId}.',
+    );
     status.value = LocationTrackingStatus.checking;
     message.value = null;
 
@@ -268,13 +274,27 @@ class OfficerLocationTrackingService extends GetxService {
         officerId,
         useForegroundService: useForegroundService,
       );
-    } on LocationServiceDisabledException {
+    } on LocationServiceDisabledException catch (error, stackTrace) {
+      debugPrint(
+        '[OfficerLocationTracking] STAGE 1 FAILED: location services disabled. '
+        'error=$error',
+      );
+      debugPrintStack(label: '[OfficerLocationTracking] location service startup stack', stackTrace: stackTrace);
       status.value = LocationTrackingStatus.locationDisabled;
       message.value = 'Turn on GPS/location services to share your location.';
-    } on PermissionDeniedException {
+    } on PermissionDeniedException catch (error, stackTrace) {
+      debugPrint(
+        '[OfficerLocationTracking] STAGE 1 FAILED: permission denied. error=$error',
+      );
+      debugPrintStack(label: '[OfficerLocationTracking] permission startup stack', stackTrace: stackTrace);
       status.value = LocationTrackingStatus.foregroundPermissionDenied;
       message.value = 'Location permission is required during an active duty.';
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint(
+        '[OfficerLocationTracking] STAGE 1 FAILED: tracking startup error '
+        'officerId=$officerId error=$error',
+      );
+      debugPrintStack(label: '[OfficerLocationTracking] tracking startup stack', stackTrace: stackTrace);
       status.value = LocationTrackingStatus.error;
       message.value = 'Location tracking could not start. Please retry.';
     }
@@ -287,10 +307,28 @@ class OfficerLocationTrackingService extends GetxService {
     final settings = _locationSettings(useForegroundService);
     try {
       _uploadService.activate(officerId);
+      await _runLocationStreamDiagnostics(officerId);
       final stream = Geolocator.getPositionStream(locationSettings: settings);
+      debugPrint(
+        '[OfficerLocationTracking] STAGE 2: Geolocator position stream '
+        'subscribing officerId=$officerId foregroundService=$useForegroundService.',
+      );
       _positionSubscription = stream.listen(
         (position) => _onPosition(officerId, position),
-        onError: (Object error) => _onPositionError(officerId, error),
+        onError: (Object error, StackTrace stackTrace) =>
+            _onPositionError(officerId, error, stackTrace),
+        onDone: () => debugPrint(
+          '[OfficerLocationTracking] Geolocator position stream completed '
+          'officerId=$officerId.',
+        ),
+      );
+      debugPrint(
+        '[OfficerLocationTracking] STAGE 2: Geolocator position stream '
+        'subscribed officerId=$officerId.',
+      );
+      debugPrint(
+        '[OfficerLocationTracking] STAGE 1: tracking service started '
+        'officerId=$officerId subscriptionPresent=${_positionSubscription != null}.',
       );
       final hasBackgroundAccess =
           !backgroundTrackingSupported || backgroundPermissionGranted.value;
@@ -303,10 +341,71 @@ class OfficerLocationTrackingService extends GetxService {
         message.value =
             'Location sharing is active with an Android foreground notification. Without background location permission, updates may only work while CopMap is open.';
       }
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint(
+        '[OfficerLocationTracking] STAGE 2 FAILED: could not subscribe to '
+        'Geolocator stream officerId=$officerId error=$error',
+      );
+      debugPrintStack(label: '[OfficerLocationTracking] stream subscription stack', stackTrace: stackTrace);
       status.value = LocationTrackingStatus.error;
       message.value = 'Could not start the GPS update stream. Please retry.';
       await _stopPositionSubscription();
+    }
+  }
+
+  Future<void> _runLocationStreamDiagnostics(String officerId) async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      debugPrint(
+        '[OfficerLocationTracking] TEMP DIAGNOSTIC: location services '
+        'enabled=$serviceEnabled officerId=$officerId',
+      );
+      final permission = await Geolocator.checkPermission();
+      debugPrint(
+        '[OfficerLocationTracking] TEMP DIAGNOSTIC: permission '
+        '=$permission officerId=$officerId',
+      );
+      final accuracy = await Geolocator.getLocationAccuracy();
+      debugPrint(
+        '[OfficerLocationTracking] TEMP DIAGNOSTIC: location accuracy '
+        '=$accuracy officerId=$officerId',
+      );
+    } catch (error, stackTrace) {
+      debugPrint(
+        '[OfficerLocationTracking] TEMP DIAGNOSTIC: environment check failed '
+        'officerId=$officerId error=$error',
+      );
+      debugPrintStack(
+        label: '[OfficerLocationTracking] diagnostic environment stack',
+        stackTrace: stackTrace,
+      );
+    }
+
+    try {
+      debugPrint(
+        '[OfficerLocationTracking] TEMP DIAGNOSTIC: one-time getCurrentPosition '
+        'starting officerId=$officerId timeout=20s accuracy=high.',
+      );
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+      debugPrint(
+        '[OfficerLocationTracking] TEMP DIAGNOSTIC: one-time position succeeded '
+        'officerId=$officerId latitude=${position.latitude} '
+        'longitude=${position.longitude} accuracy=${position.accuracy}.',
+      );
+    } catch (error, stackTrace) {
+      debugPrint(
+        '[OfficerLocationTracking] TEMP DIAGNOSTIC: one-time position FAILED '
+        'officerId=$officerId error=$error',
+      );
+      debugPrintStack(
+        label: '[OfficerLocationTracking] one-time position exception stack',
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -335,7 +434,22 @@ class OfficerLocationTrackingService extends GetxService {
   }
 
   void _onPosition(String officerId, Position position) {
-    if (_officerId != officerId) return;
+    if (_officerId != officerId) {
+      debugPrint(
+        '[OfficerLocationTracking] STAGE 3 DROPPED: position callback belongs '
+        'to officerId=$officerId, active officerId=$_officerId.',
+      );
+      return;
+    }
+    debugPrint(
+      '[OfficerLocationTracking] STAGE 3: position callback received '
+      'officerId=$officerId latitude=${position.latitude} '
+      'longitude=${position.longitude} accuracy=${position.accuracy}.',
+    );
+    debugPrint(
+      '[OfficerLocationTracking] Passing position to location upload service '
+      'officerId=$officerId.',
+    );
     _uploadService.enqueue(
       OfficerLocation(
         officerId: officerId,
@@ -347,7 +461,16 @@ class OfficerLocationTrackingService extends GetxService {
     );
   }
 
-  void _onPositionError(String officerId, Object error) {
+  void _onPositionError(
+    String officerId,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    debugPrint(
+      '[OfficerLocationTracking] STAGE 2/3 FAILED: Geolocator stream error '
+      'officerId=$officerId error=$error',
+    );
+    debugPrintStack(label: '[OfficerLocationTracking] position stream error stack', stackTrace: stackTrace);
     unawaited(_enqueue(() async {
       if (_officerId != officerId) return;
       await _stopPositionSubscription();

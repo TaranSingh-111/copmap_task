@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 
 import '../../../data/models/duty_model.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../bindings/admin_live_map_binding.dart';
 import '../controllers/admin_controller.dart';
 import 'admin_duty_details_page.dart';
+import 'admin_live_map_page.dart';
 import 'duty_form_page.dart';
 
 class AdminDashboardView extends GetView<AdminController> {
@@ -74,6 +76,22 @@ class AdminDashboardView extends GetView<AdminController> {
                   _MetricCard(label: 'Completed',
                       value: controller.completedDuties, icon: Icons.task_alt),
                 ],
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.map_outlined),
+                  title: const Text('Live officer map'),
+                  subtitle: const Text(
+                    'View current officer locations and active duties',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Get.to(
+                    () => const AdminLiveMapPage(),
+                    binding: AdminLiveMapBinding(),
+                    preventDuplicates: true,
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               Row(

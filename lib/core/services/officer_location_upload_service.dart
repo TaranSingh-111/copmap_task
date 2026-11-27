@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/officer_location.dart';
@@ -23,6 +24,9 @@ class OfficerLocationUploadService extends GetxService {
 
   void activate(String officerId) {
     if (_officerId == officerId) return;
+    debugPrint(
+      '[OfficerLocationUpload] Upload session activated for officerId=$officerId.',
+    );
     _sessionRevision++;
     _retryTimer?.cancel();
     _retryTimer = null;
@@ -34,7 +38,19 @@ class OfficerLocationUploadService extends GetxService {
   }
 
   void enqueue(OfficerLocation location) {
-    if (_officerId != location.officerId) return;
+    if (_officerId != location.officerId) {
+      debugPrint(
+        '[OfficerLocationUpload] STAGE 4 DROPPED: upload service invoked '
+        'for officerId=${location.officerId}, but active session is $_officerId.',
+      );
+      return;
+    }
+    debugPrint(
+      '[OfficerLocationUpload] STAGE 4: upload service invoked '
+      'officerId=${location.officerId} '
+      'latitude=${location.latitude} longitude=${location.longitude} '
+      'accuracy=${location.accuracy} updatedAt=${location.updatedAt.toIso8601String()}.',
+    );
     _pendingLocation = location;
     if (_retryTimer == null) unawaited(_flush());
   }
@@ -65,14 +81,30 @@ class OfficerLocationUploadService extends GetxService {
     final revision = _sessionRevision;
     final location = _pendingLocation!;
     uploadState.value = LocationUploadState.uploading;
+    debugPrint(
+      '[OfficerLocationUpload] Repository upload invoked '
+      'officerId=${location.officerId} sessionRevision=$revision.',
+    );
     try {
       await _repository.upsertLocation(location);
+      debugPrint(
+        '[OfficerLocationUpload] Repository upload completed '
+        'officerId=${location.officerId} sessionRevision=$revision.',
+      );
       if (revision != _sessionRevision) return;
       if (identical(_pendingLocation, location)) _pendingLocation = null;
       _retryAttempt = 0;
       uploadError.value = null;
       uploadState.value = LocationUploadState.uploaded;
-    } catch (_) {
+    } catch (error, stackTrace) {
+      debugPrint(
+        '[OfficerLocationUpload] Repository upload failed '
+        'officerId=${location.officerId} error=$error',
+      );
+      debugPrintStack(
+        label: '[OfficerLocationUpload] upload failure stack',
+        stackTrace: stackTrace,
+      );
       if (revision != _sessionRevision) return;
       uploadError.value = 'Location upload failed. Retrying automatically.';
       uploadState.value = LocationUploadState.retrying;

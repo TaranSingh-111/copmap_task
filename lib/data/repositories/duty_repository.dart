@@ -8,6 +8,25 @@ class DutyRepository {
   final SupabaseClient _client;
   static const int _pageSize = 500;
 
+  Future<List<DutyModel>> fetchActiveDuties() async {
+    final rows = <dynamic>[];
+    var offset = 0;
+    while (true) {
+      final page = await _client
+          .from('duties')
+          .select(
+            'id, title, assigned_to, status, location_name, start_time, end_time',
+          )
+          .eq('status', 'IN_PROGRESS')
+          .order('start_time', ascending: false, nullsFirst: false)
+          .range(offset, offset + _pageSize - 1);
+      rows.addAll(page);
+      if (page.length < _pageSize) break;
+      offset += _pageSize;
+    }
+    return _mapDuties(rows);
+  }
+
   Future<List<DutyModel>> fetchAssignedDuties() async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
