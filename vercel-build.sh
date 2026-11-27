@@ -11,6 +11,12 @@ export PATH="/tmp/flutter/bin:$PATH"
 # Enable web
 flutter config --enable-web
 
+# Generate .env BEFORE building
+cat > .env <<EOF
+SUPABASE_URL=$SUPABASE_URL
+SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+EOF
+
 # Install dependencies
 flutter pub get
 
