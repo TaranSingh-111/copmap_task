@@ -1,0 +1,4 @@
+// Copy this file to maps-config.js and set a Google Maps JavaScript API
+// key restricted to Maps JavaScript API and your local/deployed website origins.
+// This browser key is public at runtime; referrer and API restrictions are required.
+window.COPMAP_MAPS_API_KEY = 'YOUR_RESTRICTED_WEB_MAPS_API_KEY';

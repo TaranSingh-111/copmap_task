@@ -2,6 +2,7 @@
 .env
 /android/maps.properties
 /ios/Flutter/Maps.xcconfig
+/web/maps-config.js
 
 # Miscellaneous
 *.class

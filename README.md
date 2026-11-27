@@ -77,12 +77,13 @@ The client key is not a service credential. **Never place the Supabase service-r
 
 ### Google Maps keys
 
-Use separate restricted keys where practical. Restrict each key to the required Maps SDK/API and to the relevant Android application/signing certificate or iOS bundle identifier.
+Use separate restricted keys where practical. Restrict each key to the required Maps API and the relevant platform identity.
 
 - **Android:** Copy `android/maps.properties.example` to `android/maps.properties` and set `MAPS_API_KEY=<restricted-android-key>`. Gradle reads this file and supplies the manifest placeholder.
 - **iOS:** Copy `ios/Flutter/Maps.xcconfig.example` to `ios/Flutter/Maps.xcconfig` and set `MAPS_API_KEY = <restricted-ios-key>`.
+- **Web:** Copy `web/maps-config.js.example` to `web/maps-config.js` and set `window.COPMAP_MAPS_API_KEY` to a key restricted to Maps JavaScript API and your local/deployed website referrers. `web/index.html` loads the Maps JavaScript API before Flutter starts, so `google.maps` is available when the Flutter map widget initializes.
 
-Both local files are ignored by Git. Do not commit real keys. The example files contain placeholders only.
+The local config files are ignored by Git. Do not commit real keys. A Maps browser key is visible to users at runtime; protect it with Google Cloud API and HTTP referrer restrictions.
 
 ### Install and run
 

@@ -4,43 +4,79 @@
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
   -->
   <base href="$FLUTTER_BASE_HREF">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
+  <meta name="description" content="CopMap officer duty management">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="copmap">
+  <meta name="apple-mobile-web-app-title" content="CopMap">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>copmap</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <title>CopMap</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    #startup-error {
+      max-width: 640px;
+      margin: 48px auto;
+      padding: 20px;
+      color: #172554;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font: 16px/1.5 Arial, sans-serif;
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div id="startup-error" role="alert" hidden></div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- This local file is gitignored. Copy maps-config.js.example and add a
+       referrer-restricted Google Maps JavaScript API key. -->
+  <script src="maps-config.js"></script>
+  <script>
+    (() => {
+      const showStartupError = (message) => {
+        const element = document.getElementById('startup-error');
+        element.textContent = message;
+        element.hidden = false;
+      };
+
+      const apiKey = window.COPMAP_MAPS_API_KEY;
+      if (!apiKey || apiKey.startsWith('YOUR_')) {
+        showStartupError(
+          'Google Maps is not configured. Copy web/maps-config.js.example ' +
+          'to web/maps-config.js and set a restricted Maps JavaScript API key.'
+        );
+        return;
+      }
+
+      // Load Google Maps before Flutter; google_maps_flutter_web expects
+      // window.google.maps to exist when its map widget is created.
+      const mapsScript = document.createElement('script');
+      mapsScript.src =
+        'https://maps.googleapis.com/maps/api/js?key=' +
+        encodeURIComponent(apiKey);
+      mapsScript.onload = () => {
+        if (!window.google || !window.google.maps) {
+          showStartupError(
+            'Google Maps loaded without its maps namespace. Check the API key, ' +
+            'Maps JavaScript API enablement, billing, and HTTP referrer restrictions.'
+          );
+          return;
+        }
+        const flutterBootstrap = document.createElement('script');
+        flutterBootstrap.src = 'flutter_bootstrap.js';
+        flutterBootstrap.async = true;
+        document.body.appendChild(flutterBootstrap);
+      };
+      mapsScript.onerror = () => showStartupError(
+        'Could not load the Google Maps JavaScript API. Check the network, ' +
+        'the API key, and its HTTP referrer restrictions.'
+      );
+      document.head.appendChild(mapsScript);
+    })();
+  </script>
 </body>
 </html>
